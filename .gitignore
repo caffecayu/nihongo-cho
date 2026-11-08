@@ -1,3 +1,8 @@
 .DS_Store
 build/
 *.zip
+node_modules/
+android/
+src-tauri/target/
+src-tauri/icons/
+src-tauri/gen/

@@ -7,6 +7,9 @@ page = tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(
 shell = ('<!doctype html><html lang="zh"><head><meta charset="utf-8">'
          '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
          '<title>毎日にほんご帳</title>'
+         '<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2f7a55">'
+         '<link rel="apple-touch-icon" href="icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes">'
+         '<meta name="apple-mobile-web-app-title" content="にほんご帳">'
          '<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}'
          'body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>')
 (root / "docs/index.html").write_text(shell + page + "</body></html>", encoding="utf-8")

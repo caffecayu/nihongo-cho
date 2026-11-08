@@ -1,0 +1,13 @@
+{
+  "name": "nihongo-cho",
+  "version": "1.1.0",
+  "private": true,
+  "description": "毎日にほんご帳 — Windows (Tauri) and Android (Capacitor) packaging of the web app in docs/",
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

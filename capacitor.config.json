@@ -1,0 +1,6 @@
+{
+  "appId": "io.github.caffecayu.nihongocho",
+  "appName": "毎日にほんご帳",
+  "webDir": "docs",
+  "android": { "allowMixedContent": false }
+}

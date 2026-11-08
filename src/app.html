@@ -355,6 +355,10 @@ body.has-bg .top{border-radius:14px;padding:12px 16px}
 <script>
 const DATA = __DATA__;
 const SHARE = !!DATA.SHARE; // share edition: no school schedule, self-paced units
+// iPhone / iPad (iPadOS reports itself as a Mac with touch): speaking practice is left out there
+const NAV = typeof navigator==="object"?navigator:{};
+const IOS = /iPhone|iPad|iPod/.test(NAV.userAgent||"")||(NAV.platform==="MacIntel"&&NAV.maxTouchPoints>1);
+const SPEAK_ON = !(SHARE&&IOS);
 const WORDS = DATA.W.map(w=>({no:w[0],u:w[1],l:w[2],w:w[3],r:w[4],src:w[5],zh:w[6],date:DATA.S[w[1]+'-'+w[2]]||null}));
 const BYNO = Object.fromEntries(WORDS.map(w=>[w.no,w]));
 const LESSONS = DATA.LESSONS||{};
@@ -550,6 +554,10 @@ async function playSpeech(item,{slow=false,repeat=1,device=false,rate=1}={}){
     for(let i=0;i<repeat;i++){
       if(serial!==speechSerial)return;
       if(mode==="device")await speakDevice(item.text,slow,serial);
+      else if(mode==="ai"&&SHARE&&DATA.VOICE&&item.key){
+        // share edition: pre-recorded voice files, nothing is synthesized on the device
+        await playAudioSource(`voice/${item.key}${slow&&!item.key.startsWith("s")?"-slow":""}.m4a`,serial);
+      }
       else if(mode==="ai"){
         if(!item.pack)throw Error("这一句没有教材配音");
         await loadPack(item.pack);
@@ -694,7 +702,7 @@ function renderSideContext(){
     side.querySelectorAll("[data-wordview]").forEach(b=>b.onclick=()=>{sub=b.dataset.wordview;render();window.scrollTo(0,0)});
   }else if(tab==="tasks"){
     const up=allEvents().filter(e=>e.d>=today()).length;
-    side.innerHTML=`<div class="side-label">任务日志</div>${option("日历与考试","home",up,sub==="home","taskview")}${option("口语练习","speak",speakProgress().done+"/"+SPEAK.length,sub==="speak"||sub==="speakRun","taskview")}`;
+    side.innerHTML=`<div class="side-label">任务日志</div>${option("日历与考试","home",up,sub==="home","taskview")}${SPEAK_ON?option("口语练习","speak",speakProgress().done+"/"+SPEAK.length,sub==="speak"||sub==="speakRun","taskview"):""}`;
     side.querySelectorAll("[data-taskview]").forEach(b=>b.onclick=()=>{if(spk?.recording)recStop();spk=null;sub=b.dataset.taskview;render();window.scrollTo(0,0)});
   }else{
     side.innerHTML=`<div class="side-label">我的学习</div>${option("坚持记录","meCalendar",null,false,"jump")}${option("学习与发音设置","meSettings",null,false,"jump")}${option("外观皮肤","meSkin",null,false,"jump")}${option("学习记录备份","meBackup",null,false,"jump")}`;
@@ -1567,7 +1575,7 @@ const countdown=k=>k===0?"就是今天":k===1?"明天":`还有 ${k} 天`;
 function speakProgress(){const done=SPEAK.filter(d=>S.speak[d.id]).length,good=SPEAK.filter(d=>(S.speak[d.id]?.best||0)>=80).length;return {done,good,total:SPEAK.length}}
 function urgentCard(t){
   const ex=allEvents().filter(e=>e.kind==="exam"&&e.d>=t)[0];if(!ex)return "";
-  const k=diffDays(t,ex.d),sp=isSpeakingExam(ex),p=speakProgress();
+  const k=diffDays(t,ex.d),sp=SPEAK_ON&&isSpeakingExam(ex),p=speakProgress();
   return `<section class="card urgent ${k<=3?"hot":""}" aria-label="紧急任务">
     <div class="row" style="justify-content:space-between"><span class="chip warn">紧急任务 · ${countdown(k)}</span><span class="small muted">${mdw(ex.d)}</span></div>
     <h2 style="font-size:20px;margin-top:6px" lang="ja">${esc(ex.title)}</h2>
@@ -1577,6 +1585,7 @@ function urgentCard(t){
   </section>`;
 }
 function renderTasks(){
+  if(!SPEAK_ON&&(sub==="speak"||sub==="speakRun"))sub="home";
   if(sub==="speak")return renderSpeakList();
   if(sub==="speakRun")return renderSpeakRun();
   const t=today();calMonth=calMonth||t.slice(0,7);calSel=calSel||t;
@@ -1600,6 +1609,7 @@ function renderTasks(){
      ${LESSONS[calSel]?`<div class="small"><span class="chip">课</span> <span lang="ja">${esc(LESSONS[calSel])}</span></div>`:isWeekend(calSel)?`<div class="small muted">周末 · 复习本周内容</div>`:`<div class="small muted">课表上没有这天的课</div>`}
      ${sel.map(e=>`<div class="ev-row"><span class="chip k-${e.kind}">${EVKINDS[e.kind]}</span><b lang="ja">${esc(e.title)}</b>${e.fixed?"":`<button class="btn ghost small" data-del="${e.id}" aria-label="删除 ${esc(e.title)}">删除</button>`}</div>`).join("")}
    </section>
+   ${SPEAK_ON&&SPEAK.length?`<section class="card row" style="justify-content:space-between"><div><b style="font-size:16px">口语练习</b><div class="small muted" lang="ja">先生と面談する · ${speakProgress().done}/${SPEAK.length}</div></div><button class="btn pri" id="goSpeak2">开始</button></section>`:""}
    <section class="card" style="display:flex;flex-direction:column;gap:6px">
      <h3 style="font-size:15px">接下来 45 天</h3>
      ${up.length?up.map(e=>`<button class="up-row" data-go="${e.d}"><span class="small muted" style="min-width:86px">${mdw(e.d)}</span><span class="chip k-${e.kind}">${EVKINDS[e.kind]}</span><span lang="ja" style="flex:1;text-align:left">${esc(e.title)}</span><span class="small ${diffDays(t,e.d)<=3?"warn-t":"muted"}">${countdown(diffDays(t,e.d))}</span></button>`).join(""):`<div class="small muted">暂时没有安排</div>`}
@@ -1613,6 +1623,7 @@ function renderTasks(){
   document.getElementById("evAdd").onclick=()=>openEventModal(calSel);
   const gs=document.getElementById("goSpeak");if(gs)gs.onclick=()=>{sub="speak";render();window.scrollTo(0,0)};
   const gm=document.getElementById("goMock");if(gm)gm.onclick=startMock;
+  const g2=document.getElementById("goSpeak2");if(g2)g2.onclick=()=>{sub="speak";render();window.scrollTo(0,0)};
 }
 function openEventModal(d){
   const m=openModal(`<h2>添加考试 / 任务</h2>
@@ -1688,7 +1699,7 @@ function srStart(){
   const r=new SR(),run=spk,k=spk.i;let text="";REC.sr=r;
   r.lang="ja-JP";r.interimResults=false;r.continuous=true;r.maxAlternatives=1;
   r.onresult=e=>{text=[...e.results].map(x=>x[0].transcript).join("")};
-  r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed")toast("请允许使用麦克风和语音识别")};
+  r.onerror=e=>{toast(e.error==="not-allowed"||e.error==="service-not-allowed"?"请允许使用麦克风和语音识别":e.error==="no-speech"?"没听清，再说一次":"无法识别语音，可以打字回答");text=text||""};
   r.onend=()=>{REC.sr=null;clearInterval(REC.timer);if(spk!==run)return;spk.recording=false;
     if(text)spk.res[k]=evalTurn(spk.turns[k],text);else toast("没听清，再说一次");renderSpeakRun()};
   try{r.start()}catch(e){toast("无法录音，可以打字回答");return}
@@ -1817,6 +1828,7 @@ function renderSpeakList(){
   main.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>startSpeak(b.dataset.sp));
 }
 
+if(SHARE&&location.protocol==="https:"&&NAV.serviceWorker)NAV.serviceWorker.register("sw.js").catch(()=>{});
 applyTheme();
 render();
 setTimeout(boot,0);
