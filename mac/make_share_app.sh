@@ -6,7 +6,7 @@ set -e
 HERE="${0:A:h}"
 ROOT="${HERE:h}"
 NAME="毎日にほんご帳"
-VER="${1:-1.0.0}"
+VER="${1:-1.1.1}"
 OUT="$ROOT/build/mac"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT

@@ -159,6 +159,7 @@ canvas.pad{touch-action:none;background:var(--paper);border:2px solid var(--grid
 .pl .jp{font-family:var(--f-disp);font-weight:700}
 .pl .zh{font-size:13px;color:var(--muted)}
 details summary{cursor:pointer;font-weight:700}
+textarea.grow{resize:none;overflow-y:auto;line-height:1.6;min-height:42px;max-height:50vh;font-size:16px}
 input.f,select.f,textarea.f{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:var(--bg);color:var(--ink)}
 label.l{font-size:12.5px;color:var(--muted);display:block;margin:8px 0 4px}
 /* me */
@@ -1372,6 +1373,16 @@ function openModal(html,label){
   setTimeout(()=>bg.querySelector(".modal input:not([type=checkbox]),.modal .btn.pri")?.focus(),0);
   return bg.querySelector(".modal");
 }
+function openTypeAnswer(done){
+  const m=openModal(`<h2>用日语输入你的回答</h2>
+   <textarea class="f grow" id="taIn" rows="1" lang="ja" aria-label="回答"></textarea>
+   <div class="row" style="justify-content:flex-end"><button class="btn ghost" data-close>取消</button><button class="btn pri" id="taOk">好</button></div>`,"打字回答");
+  const ta=m.querySelector("#taIn"),fit=()=>{ta.style.height="auto";ta.style.height=ta.scrollHeight+2+"px"};
+  const ok=()=>{const v=ta.value.trim();if(!v)return;closeModal();done(v)};
+  ta.oninput=fit;fit();setTimeout(()=>ta.focus(),0);
+  ta.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();ok()}};
+  m.querySelector("#taOk").onclick=ok;
+}
 function closeModal(){document.getElementById("modal")?.remove()}
 document.addEventListener?.("keydown",e=>{if(e.key==="Escape"&&document.getElementById("modal")){e.stopPropagation();closeModal()}},true);
 
@@ -1781,7 +1792,7 @@ function renderSpeakRun(){
   if($("mic"))$("mic").onclick=()=>spk.recording?recStop():recStart();
   if($("spNext"))$("spNext").onclick=speakNext;
   if($("spModel"))$("spModel").onclick=()=>speakTeacher(x.a);
-  if($("spType"))$("spType").onclick=()=>{const v=prompt("用日语输入你的回答");if(v&&v.trim()){spk.res[spk.i]=evalTurn(x,v.trim());renderSpeakRun()}};
+  if($("spType"))$("spType").onclick=()=>openTypeAnswer(v=>{spk.res[spk.i]=evalTurn(x,v);renderSpeakRun()});
   if($("spAgain"))$("spAgain").onclick=()=>spk.mock?startMock():startSpeak(spk.id);
   if($("spList"))$("spList").onclick=()=>{spk=null;sub="speak";render()};
   chat.querySelectorAll("[data-replay]").forEach(b=>b.onclick=()=>speakTeacher(spk.turns[+b.dataset.replay].jp));
