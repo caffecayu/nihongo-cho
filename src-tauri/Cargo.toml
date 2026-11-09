@@ -1,6 +1,6 @@
 [package]
 name = "nihongo-cho"
-version = "1.1.1"
+version = "1.1.2"
 description = "毎日にほんご帳"
 edition = "2021"
 

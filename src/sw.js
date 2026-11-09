@@ -1,6 +1,6 @@
 // Offline cache for the installed web app. Pages: network first, cached copy when offline.
 // Voice files are left to the browser (Safari plays cached media unreliably through a service worker).
-const C = "nihongo-cho-1.1.1";
+const C = "nihongo-cho-1.1.2";
 const CORE = ["./", "index.html", "manifest.webmanifest", "icon-192.png",
   "vendor/kanjicanvas/kanji-canvas.js", "vendor/kanjicanvas/ref-patterns.js", "vendor/kanjicanvas/kana-strokes.json"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(CORE))); self.skipWaiting(); });
