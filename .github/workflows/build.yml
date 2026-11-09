@@ -14,7 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - uses: dtolnay/rust-toolchain@stable
-      - run: npm install
+      # only the Tauri CLI is needed here; skipping install scripts avoids sharp's libvips download (Android icons only)
+      - run: npm install --ignore-scripts
       - run: npx tauri icon assets/icon.png
       - run: npx tauri build
       - name: Collect
